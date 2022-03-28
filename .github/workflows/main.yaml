@@ -3,8 +3,31 @@ name: connectionapp
 on: [pull_request, push]
 
 jobs:
-  build:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
-    with:
-      flutter_channel: stable
-      flutter_version: 2.10.0
+  build_apk:
+    name: build and development release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: "12.x"
+      - uses: subosito/flutter-action@v1
+        with:
+          flutter-version: "2.10.3"
+
+      - uses: subosito/flutter-action@v1.5.3
+
+      - run: flutter clean
+      - run: flutter pub get
+      - run: mv build/app/outputs/flutter-apk/app-armeabi-v7a-development-release.apk build/app/outputs/flutter-apk/Internet_connection_status.apk
+
+      - name: build apk
+        run: flutter build apk --split-per-abi --flavor development --target lib/main_development.dart
+
+      - name: Push to Releases
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/app/outputs/flutter-apk/Internet_connection_status.apk"
+          tag: v1.0.${{ github.run_number }}
+          token: ${{ secrets.TOKEN }}
